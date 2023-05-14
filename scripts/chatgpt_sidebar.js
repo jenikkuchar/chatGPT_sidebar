@@ -1,141 +1,83 @@
-(function() {
-    // Definování proměnných
-    let sidebarWidth = 25; // procenta
-    let minimizedWidth = 20; // pixely
-    let defaultWidth = sidebarWidth;
-    let isMinimized = false;
-    let originalBodyWidth;
-    let originalSidebarWidth;
-    let webappUrl = "https://chat.openai.com";
+// Required styles for the sidebar
+const styles = `
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0" />
+<style>
+    :root {
+        --sidebar-width: 25%;
+    }
+    @media (prefers-color-scheme: dark) {
+        --font-color: #E9E9EF;
+        --bg-color: #1D1E20;
+        --border-color: #E9E9EF;
+    }
+    @media (prefers-color-scheme: light) {
+        --font-color: #2E2F39;
+        --bg-color: #FFFFFF;
+        --border-color: #2E2F39;
+    }
+    #sidebar {
+        position: fixed;
+        right: 0;
+        width: var(--sidebar-width);
+        height: 100%;
+        min-width: 150px;
+        max-width: 90%;
+        background-color: var(--bg-color);
+        color: var(--font-color);
+        border-left: 1px solid var(--border-color);
+        overflow: auto;
+        transition: width 0.3s ease;
+    }
+    #sidebar.closed {
+        width: 20px;
+    }
+    #sidebar-header {
+        height: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 10px;
+        border-bottom: 1px solid var(--border-color);
+    }
+    #sidebar-footer {
+        height: 20px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 0 10px;
+        border-top: 1px solid var(--border-color);
+        font-size: 10px;
+    }
+</style>
+`;
 
-    // Vytvoření sidebaru
-    let sidebar = document.createElement("div");
-    sidebar.id = "chatgpt_sidebar";
-    sidebar.style.width = `${sidebarWidth}%`;
-    sidebar.style.position = "fixed";
-    sidebar.style.right = "0";
-    sidebar.style.top = "0";
-    sidebar.style.bottom = "0";
-    sidebar.style.overflow = "auto";
-    sidebar.style.zIndex = "999999";
-    sidebar.style.borderLeft = "1px solid";
-    sidebar.style.backgroundColor = "var(--bg-color)";
-    sidebar.style.color = "var(--font-color)";
+// Required HTML for the sidebar
+const html = `
+<div id="sidebar">
+    <div id="sidebar-header">
+        <span class="material-symbols-outlined">right_panel_close</span>
+        <span class="material-symbols-outlined">open_in_new</span>
+        <span class="material-symbols-outlined">cancel</span>
+    </div>
+    <div id="sidebar-content"></div>
+    <div id="sidebar-footer">© 2023, created by JeniCode & Chat GPT</div>
+</div>
+`;
 
-    // Vytvoření hlavičky
-    let header = document.createElement("div");
-    header.id = "chatgpt_header";
-    header.style.height = "20px";
-    header.style.display = "flex";
-    header.style.justifyContent = "space-between";
-    header.style.padding = "5px";
-    header.style.borderBottom = "1px solid var(--font-color)";
+// Append the styles and the sidebar to the document
+document.body.innerHTML += styles + html;
 
-    // Vytvoření odkazů v hlavičce
-    let minimizeLink = document.createElement("span");
-    minimizeLink.className = "material-symbols-outlined";
-    minimizeLink.textContent = "right_panel_close";
-    minimizeLink.style.cursor = "pointer";
+// Load the webapp content
+document.getElementById('sidebar-content').innerHTML = `<object type="text/html" data="https://chat.openai.com" style="width:100%;height:calc(100% - 40px);"></object>`;
 
-    let openLink = document.createElement("span");
-    openLink.className = "material-symbols-outlined";
-    openLink.textContent = "open_in_new";
-    openLink.style.cursor = "pointer";
-
-    let closeLink = document.createElement("span");
-    closeLink.className = "material-symbols-outlined";
-    closeLink.textContent = "cancel";
-    closeLink.style.cursor = "pointer";
-
-    // Přidání odkazů do hlavičky
-    header.appendChild(minimizeLink);
-    header.appendChild(closeLink);
-    header.appendChild(openLink);
-
-    // Vytvoření obsahu
-    let content = document.createElement("div");
-    content.id = "chatgpt_content";
-    content.style.overflowY = "auto";
-    content.style.padding = "5px";
-
-    // Vložení obsahu do sidebaru
-    sidebar.appendChild(header);
-    sidebar.appendChild(content);
-
-    // Přidání sidebaru do dokumentu
-    document.body.appendChild(sidebar);
-
-    // Nastavení šířky těla dokumentu
-    originalBodyWidth = document.body.style.width;
-    document.body.style.width = `${100 - sidebarWidth}%`;
-
-    // Nastavení akcí pro odkazy
-    minimizeLink.addEventListener("click", function() {
-        if (isMinimized) {
-            sidebar.style.width = `${originalSidebarWidth}%`;
-            document.body.style.width = `${100 - originalSidebarWidth}%`;
-            minimizeLink.textContent = "right_panel_close";
-        } else {
-            originalSidebarWidth = sidebarWidth;
-            sidebar.style.width = `${minimizedWidth}px`;
-            document.body.style.width = `calc(100% - ${minimizedWidth}px)`;
-            minimizeLink.textContent = "right_panel_open";
-        }
-        isMinimized = !isMinimized;
-    });
-
-    closeLink.addEventListener("click", function() {
-        document.body.removeChild(sidebar);
-        document.body.style.width = originalBodyWidth;
-    });
-
-    openLink.addEventListener("click", function() {
-        window.open(webappUrl, '_blank');
-    });
-
-    // Načtení stránky do obsahu sidebaru
-    fetch(webappUrl)
-        .then(response => response.text())
-        .then(data => {
-            let parser = new DOMParser();
-            let doc = parser.parseFromString(data, 'text/html');
-            content.appendChild(doc.documentElement);
-        });
-    
-    // Vytvoření patičky
-    let footer = document.createElement("div");
-    footer.id = "chatgpt_footer";
-    footer.style.height = "20px";
-    footer.style.display = "flex";
-    footer.style.justifyContent = "center";
-    footer.style.padding = "5px";
-    footer.style.borderTop = "1px solid var(--font-color)";
-    footer.style.fontSize = "small";
-    footer.textContent = "© 2023, created by JeniCode & Chat GPT";
-    sidebar.appendChild(footer);
-
-    // CSS pro webfonty
-    let link = document.createElement('link');
-    link.rel = "stylesheet";
-    link.href = "https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0";
-    document.head.appendChild(link);
-
-    // Nastavení tématu na základě prefers-color-scheme
-    let style = document.createElement('style');
-    style.innerHTML = `
-        @media (prefers-color-scheme: dark) {
-            :root {
-                --font-color: #E9E9EF;
-                --bg-color: #1D1E20;
-            }
-        }
-
-        @media (prefers-color-scheme: light) {
-            :root {
-                --font-color: #2E2F39;
-                --bg-color: #FFFFFF;
-            }
-        }
-    `;
-    document.head.appendChild(style);
-})();
+// Toggle sidebar
+document.querySelector('#sidebar-header .material-symbols-outlined').addEventListener('click', function() {
+    const sidebar = document.getElementById('sidebar');
+    if(sidebar.classList.contains('closed')) {
+        sidebar.classList.remove('closed');
+        this.textContent = 'right_panel_close';
+    } else {
+        sidebar.classList.add('closed');
+        this.textContent = 'right_panel_open';
+    }
+});
