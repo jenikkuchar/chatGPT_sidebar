@@ -1,153 +1,162 @@
-javascript:(function() {
-    // Check if the sidebar is already injected
-    var sidebar = document.getElementById('chatgpt-sidebar');
-    if (sidebar) {
-        // If the sidebar already exists, remove it
-        sidebar.remove();
-        return;
-    }
+(function() {
+  var sidebarWidth = '25%';
+  var webappUrl = 'https://chat.openai.com';
 
-    // Create the sidebar container
-    var sidebarContainer = document.createElement('div');
-    sidebarContainer.id = 'chatgpt-sidebar';
-    sidebarContainer.style.width = '25%';
-    sidebarContainer.style.position = 'fixed';
-    sidebarContainer.style.top = '0';
-    sidebarContainer.style.right = '0';
-    sidebarContainer.style.bottom = '0';
-    sidebarContainer.style.zIndex = '999999';
-    sidebarContainer.style.overflow = 'hidden';
-    sidebarContainer.style.boxSizing = 'border-box';
-    sidebarContainer.style.transition = 'width 0.3s ease';
+  function createSidebar() {
+    var sidebar = document.createElement('div');
+    sidebar.style.cssText = `
+      position: fixed;
+      right: 0;
+      top: 0;
+      width: ${sidebarWidth};
+      min-width: 150px;
+      max-width: 90%;
+      height: 100vh;
+      box-sizing: border-box;
+      border-left: 1px solid var(--border-color);
+      background-color: var(--background-color);
+      font-family: 'Material Symbols Outlined', sans-serif;
+      color: var(--font-color);
+      overflow: hidden;
+      resize: horizontal;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: space-between;
+    `;
+    sidebar.id = 'chatgpt-sidebar';
 
-    // Create the sidebar header
-    var sidebarHeader = document.createElement('div');
-    sidebarHeader.style.height = '20px';
-    sidebarHeader.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-bg-color');
-    sidebarHeader.style.color = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-font-color');
-    sidebarHeader.style.borderBottom = '1px solid ' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-border-color');
-    sidebarHeader.style.display = 'flex';
-    sidebarHeader.style.alignItems = 'center';
-    sidebarHeader.style.padding = '0 5px';
+    var header = createHeader();
+    var content = createContent();
+    var footer = createFooter();
 
-    // Create the minimize button
-    var minimizeButton = document.createElement('span');
-    minimizeButton.className = 'material-symbols-outlined';
-    minimizeButton.textContent = 'right_panel_close';
-    minimizeButton.style.cursor = 'pointer';
-    minimizeButton.style.marginRight = 'auto';
-    minimizeButton.style.marginLeft = '5px';
-    minimizeButton.onclick = function() {
-        sidebarContainer.style.width = '20px';
-        minimizeButton.textContent = 'right_panel_open';
+    sidebar.appendChild(header);
+    sidebar.appendChild(content);
+    sidebar.appendChild(footer);
+
+    document.body.appendChild(sidebar);
+    document.body.style.marginRight = sidebarWidth;
+  }
+
+  function createHeader() {
+    var header = document.createElement('div');
+    header.style.cssText = `
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      box-sizing: border-box;
+      border-bottom: 1px solid var(--border-color);
+    `;
+
+    var minimizeLink = createMinimizeLink();
+    var openLink = createOpenLink();
+    var closeLink = createCloseLink();
+
+    header.appendChild(minimizeLink);
+    header.appendChild(openLink);
+    header.appendChild(closeLink);
+
+    return header;
+  }
+
+  function createMinimizeLink() {
+    var link = document.createElement('span');
+    link.className = 'material-symbols-outlined';
+    link.textContent = 'right_panel_close';
+    link.onclick = function() {
+      var sidebar = document.getElementById('chatgpt-sidebar');
+      sidebar.style.width = '20px';
+      document.body.style.marginRight = '20px';
+      this.textContent = 'right_panel_open';
     };
 
-    // Create the open in new tab button
-    var openButton = document.createElement('span');
-    openButton.className = 'material-symbols-outlined';
-    openButton.textContent = 'open_in_new';
-    openButton.style.cursor = 'pointer';
-    openButton.style.marginLeft = 'auto';
-    openButton.onclick = function() {
-        var url = window.location.href;
-        if (url.endsWith('/')) {
-            url = url.slice(0, -1);
-        }
-        window.open(url, '_blank');
+    return link;
+  }
+
+  function createOpenLink() {
+    var link = document.createElement('span');
+    link.className = 'material-symbols-outlined';
+    link.textContent = 'open_in_new';
+    link.onclick = function() {
+      window.open(webappUrl, '_blank');
     };
 
-    // Create the close sidebar button
-    var closeButton = document.createElement('span');
-    closeButton.className = 'material-symbols-outlined';
-    closeButton.textContent = 'cancel';
-    closeButton.style.cursor = 'pointer';
-    closeButton.style.marginLeft = '5px';
-    closeButton.onclick = function() {
-        sidebarContainer.remove();
+    return link;
+  }
+
+  function createCloseLink() {
+    var link = document.createElement('span');
+    link.className = 'material-symbols-outlined';
+    link.textContent = 'cancel';
+    link.onclick = function() {
+      var sidebar = document.getElementById('chatgpt-sidebar');
+      document.body.removeChild(sidebar);
+      document.body.style.marginRight = '0';
     };
 
-    // Append buttons to the header
-    sidebarHeader.appendChild(minimizeButton);
-    sidebarHeader.appendChild(openButton);
-    sidebarHeader.appendChild(closeButton);
+    return link;
+  }
 
-    // Append header to the sidebar container
-    sidebarContainer.appendChild(sidebarHeader);
-
-    // Create the iframe for loading the web page
+  function createContent() {
     var iframe = document.createElement('iframe');
-    iframe.src = 'https://chat.openai.com/';
-    iframe.style.width = '100%';
-    iframe.style.height = 'calc(100% - 20px)';
-    iframe.style.border = 'none';
+    iframe.src = webappUrl;
+    iframe.style.cssText = `
+      width: 100%;
+      height: calc(100vh - 40px);
+      border: none;
+    `;
 
-    // Append iframe to the sidebar container
-    sidebarContainer.appendChild(iframe);
+    return iframe;
+  }
 
-    // Append sidebar container to the document body
-    document.body.appendChild(sidebarContainer);
+  function createFooter() {
+    var footer = document.createElement('div');
+    footer.style.cssText = `
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 10px;
+      box-sizing: border-box;
+      border-top: 1px solid var(--border-color);
+      font-size: 10px;
+    `;
 
-    // Handle drag and drop for resizing the sidebar
-    var isResizing = false;
-    var startX = 0;
-    var startWidth = 0;
+    footer.textContent = '© 2023, created by JeniCode & Chat GPT';
 
-    sidebarHeader.addEventListener('mousedown', function(e) {
-        if (e.offsetX > sidebarHeader.offsetWidth - 10) {
-            isResizing = true;
-            startX = e.pageX;
-            startWidth = parseFloat(document.defaultView.getComputedStyle(sidebarContainer, null).getPropertyValue('width'));
-        }
-    });
+    return footer;
+  }
 
-    document.addEventListener('mousemove', function(e) {
-        if (!isResizing) {
-            return;
-        }
+  function setColors() {
+    var colorScheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 
-        var width = startWidth + (e.pageX - startX);
-        width = Math.max(150, width);
-        width = Math.min(window.innerWidth * 0.9, width);
-        sidebarContainer.style.width = width + 'px';
-    });
-
-    document.addEventListener('mouseup', function(e) {
-        isResizing = false;
-    });
-
-    // Append CSS for web fonts
-    var fontLink = document.createElement('link');
-    fontLink.rel = 'stylesheet';
-    fontLink.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0';
-    document.head.appendChild(fontLink);
-
-    // Apply color scheme based on prefers-color-scheme
-    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (prefersDark) {
-        document.documentElement.style.setProperty('--sidebar-bg-color', '#1D1E20');
-        document.documentElement.style.setProperty('--sidebar-font-color', '#E9E9EF');
-        document.documentElement.style.setProperty('--sidebar-border-color', '#E9E9EF');
+    var backgroundColor, fontColor, borderColor;
+    if (colorScheme === 'dark') {
+      backgroundColor = '#1D1E20';
+      fontColor = '#E9E9EF';
+      borderColor = '#E9E9EF';
     } else {
-        document.documentElement.style.setProperty('--sidebar-bg-color', '#FFFFFF');
-        document.documentElement.style.setProperty('--sidebar-font-color', '#2E2F39');
-        document.documentElement.style.setProperty('--sidebar-border-color', '#2E2F39');
+      backgroundColor = '#FFFFFF';
+      fontColor = '#2E2F39';
+      borderColor = '#2E2F39';
     }
 
-    // Create the footer
-    var sidebarFooter = document.createElement('div');
-    sidebarFooter.style.height = '20px';
-    sidebarFooter.style.backgroundColor = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-bg-color');
-    sidebarFooter.style.color = getComputedStyle(document.documentElement).getPropertyValue('--sidebar-font-color');
-    sidebarFooter.style.borderTop = '1px solid ' + getComputedStyle(document.documentElement).getPropertyValue('--sidebar-border-color');
-    sidebarFooter.style.display = 'flex';
-    sidebarFooter.style.alignItems = 'center';
-    sidebarFooter.style.justifyContent = 'center';
-    sidebarFooter.style.fontSize = '12px';
-    sidebarFooter.textContent = '© 2023, created by JeniCode & Chat GPT';
+    document.documentElement.style.setProperty('--background-color', backgroundColor);
+    document.documentElement.style.setProperty('--font-color', fontColor);
+    document.documentElement.style.setProperty('--border-color', borderColor);
+  }
 
-    // Append footer to the sidebar container
-    sidebarContainer.appendChild(sidebarFooter);
+  function loadFont() {
+    var link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0';
+    document.head.appendChild(link);
+  }
 
+  loadFont();
+  setColors();
+  createSidebar();
 })();
 
