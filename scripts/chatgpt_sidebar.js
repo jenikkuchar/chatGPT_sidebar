@@ -1,162 +1,132 @@
 (function() {
-  var sidebarWidth = '25%';
-  var webappUrl = 'https://chat.openai.com';
+  // Defaultní hodnoty
+  const defaults = {
+    webapp_url: "https://chat.openai.com",
+    sidebar_width: "25%", 
+    min_width: 150,
+    max_width: "90%",
+    min_sidebar: 20,
+    header_height: 20,
+    footer_height: 20,
+  };
 
-  function createSidebar() {
-    var sidebar = document.createElement('div');
-    sidebar.style.cssText = `
-      position: fixed;
-      right: 0;
-      top: 0;
-      width: ${sidebarWidth};
-      min-width: 150px;
-      max-width: 90%;
-      height: 100vh;
-      box-sizing: border-box;
-      border-left: 1px solid var(--border-color);
-      background-color: var(--background-color);
-      font-family: 'Material Symbols Outlined', sans-serif;
-      color: var(--font-color);
-      overflow: hidden;
-      resize: horizontal;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      justify-content: space-between;
-    `;
-    sidebar.id = 'chatgpt-sidebar';
+  // Vytvoření stylů
+  let style = document.createElement('style');
+  document.head.appendChild(style);
+  let sheet = style.sheet;
 
-    var header = createHeader();
-    var content = createContent();
-    var footer = createFooter();
+  sheet.insertRule(`:root { 
+    --font-color-light: #2E2F39;
+    --background-color-light: #FFFFFF;
+    --border-color-light: #2E2F39;
+    --font-color-dark: #E9E9EF;
+    --background-color-dark: #1D1E20;
+    --border-color-dark: #E9E9EF;
+  }`, sheet.cssRules.length);
 
-    sidebar.appendChild(header);
-    sidebar.appendChild(content);
-    sidebar.appendChild(footer);
-
-    document.body.appendChild(sidebar);
-    document.body.style.marginRight = sidebarWidth;
-  }
-
-  function createHeader() {
-    var header = document.createElement('div');
-    header.style.cssText = `
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      box-sizing: border-box;
-      border-bottom: 1px solid var(--border-color);
-    `;
-
-    var minimizeLink = createMinimizeLink();
-    var openLink = createOpenLink();
-    var closeLink = createCloseLink();
-
-    header.appendChild(minimizeLink);
-    header.appendChild(openLink);
-    header.appendChild(closeLink);
-
-    return header;
-  }
-
-  function createMinimizeLink() {
-    var link = document.createElement('span');
-    link.className = 'material-symbols-outlined';
-    link.textContent = 'right_panel_close';
-    link.onclick = function() {
-      var sidebar = document.getElementById('chatgpt-sidebar');
-      sidebar.style.width = '20px';
-      document.body.style.marginRight = '20px';
-      this.textContent = 'right_panel_open';
-    };
-
-    return link;
-  }
-
-  function createOpenLink() {
-    var link = document.createElement('span');
-    link.className = 'material-symbols-outlined';
-    link.textContent = 'open_in_new';
-    link.onclick = function() {
-      window.open(webappUrl, '_blank');
-    };
-
-    return link;
-  }
-
-  function createCloseLink() {
-    var link = document.createElement('span');
-    link.className = 'material-symbols-outlined';
-    link.textContent = 'cancel';
-    link.onclick = function() {
-      var sidebar = document.getElementById('chatgpt-sidebar');
-      document.body.removeChild(sidebar);
-      document.body.style.marginRight = '0';
-    };
-
-    return link;
-  }
-
-  function createContent() {
-    var iframe = document.createElement('iframe');
-    iframe.src = webappUrl;
-    iframe.style.cssText = `
-      width: 100%;
-      height: calc(100vh - 40px);
-      border: none;
-    `;
-
-    return iframe;
-  }
-
-  function createFooter() {
-    var footer = document.createElement('div');
-    footer.style.cssText = `
-      height: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 0 10px;
-      box-sizing: border-box;
-      border-top: 1px solid var(--border-color);
-      font-size: 10px;
-    `;
-
-    footer.textContent = '© 2023, created by JeniCode & Chat GPT';
-
-    return footer;
-  }
-
-  function setColors() {
-    var colorScheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-
-    var backgroundColor, fontColor, borderColor;
-    if (colorScheme === 'dark') {
-      backgroundColor = '#1D1E20';
-      fontColor = '#E9E9EF';
-      borderColor = '#E9E9EF';
-    } else {
-      backgroundColor = '#FFFFFF';
-      fontColor = '#2E2F39';
-      borderColor = '#2E2F39';
+  sheet.insertRule(`@media (prefers-color-scheme: dark) { 
+    .chatgpt-sidebar { 
+      color: var(--font-color-dark);
+      background-color: var(--background-color-dark);
+      border: 1px solid var(--border-color-dark);
     }
+  }`, sheet.cssRules.length);
 
-    document.documentElement.style.setProperty('--background-color', backgroundColor);
-    document.documentElement.style.setProperty('--font-color', fontColor);
-    document.documentElement.style.setProperty('--border-color', borderColor);
-  }
+  sheet.insertRule(`@media (prefers-color-scheme: light) { 
+    .chatgpt-sidebar { 
+      color: var(--font-color-light);
+      background-color: var(--background-color-light);
+      border: 1px solid var(--border-color-light);
+    }
+  }`, sheet.cssRules.length);
 
-  function loadFont() {
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = 'https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0';
-    document.head.appendChild(link);
-  }
+  sheet.insertRule(`.chatgpt-sidebar { 
+    position: fixed;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: ${defaults.sidebar_width};
+    min-width: ${defaults.min_width}px;
+    max-width: ${defaults.max_width};
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+  }`, sheet.cssRules.length);
 
-  loadFont();
-  setColors();
-  createSidebar();
+  sheet.insertRule(`.chatgpt-header, .chatgpt-footer { 
+    height: ${defaults.header_height}px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    border-bottom: 1px solid;
+    font-size: 16px;
+  }`, sheet.cssRules.length);
+
+  sheet.insertRule(`.chatgpt-content { 
+    flex-grow: 1;
+    overflow: auto;
+  }`, sheet.cssRules.length);
+
+  sheet.insertRule(`.chatgpt-content iframe { 
+    width: 100%;
+    height: 100%;
+    border: none;
+  }`, sheet.cssRules.length);
+
+  // Vytvoření sidebaru
+  let sidebar = document.createElement('div');
+  sidebar.className = "chatgpt-sidebar";
+  document.body.appendChild(sidebar);
+
+  // Vytvoření hlavičky
+  let header = document.createElement('div');
+  header.className = "chatgpt-header";
+  sidebar.appendChild(header);
+
+  // Vytvoření tlačítek v hlavičce
+  let minimizeBtn = document.createElement('span');
+  minimizeBtn.className = "material-symbols-outlined";
+  minimizeBtn.innerHTML = "right_panel_close";
+  minimizeBtn.onclick = function() {
+    if (sidebar.style.width !== `${defaults.min_sidebar}px`) {
+      sidebar.dataset.prevWidth = sidebar.style.width;
+      sidebar.style.width = `${defaults.min_sidebar}px`;
+      minimizeBtn.innerHTML = "right_panel_open";
+    } else {       sidebar.style.width = sidebar.dataset.prevWidth || defaults.sidebar_width;
+      minimizeBtn.innerHTML = "right_panel_close";
+    }
+  };
+  header.appendChild(minimizeBtn);
+
+  let openInNewTabBtn = document.createElement('span');
+  openInNewTabBtn.className = "material-symbols-outlined";
+  openInNewTabBtn.innerHTML = "open_in_new";
+  openInNewTabBtn.onclick = function() {
+    window.open(defaults.webapp_url, '_blank');
+  };
+  header.appendChild(openInNewTabBtn);
+
+  let closeBtn = document.createElement('span');
+  closeBtn.className = "material-symbols-outlined";
+  closeBtn.innerHTML = "cancel";
+  closeBtn.onclick = function() {
+    document.body.removeChild(sidebar);
+  };
+  header.appendChild(closeBtn);
+
+  // Vytvoření obsahu sidebaru
+  let content = document.createElement('div');
+  content.className = "chatgpt-content";
+  sidebar.appendChild(content);
+
+  let iframe = document.createElement('iframe');
+  iframe.src = defaults.webapp_url;
+  content.appendChild(iframe);
+
+  // Vytvoření patičky
+  let footer = document.createElement('div');
+  footer.className = "chatgpt-footer";
+  footer.innerHTML = "© 2023, created by JeniCode & Chat GPT";
+  sidebar.appendChild(footer);
 })();
-
